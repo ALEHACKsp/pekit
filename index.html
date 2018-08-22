@@ -1,0 +1,1357 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<title>Page Title</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<script src="vue.js"></script>
+	<script src="FileSaver.js"></script>
+
+<style>
+html, body, #app, .app-main {
+	font-family: 'Roboto', 'Segoe UI', 'Verdana', sans-serif;
+	overflow: hidden;
+	padding: 0;
+	margin: 0;
+	width: 100%;
+	height: 100%;
+}
+
+.app-main {
+	display: grid;
+	grid-template-columns: 10em auto;
+	grid-template-rows: 3em auto;
+}
+
+.app-header {
+	grid-column: 1 / span 2;
+	background-color: #333;
+	padding: 0 1em 0 11em;
+}
+.app-header > h1 {
+	margin: 0;
+	color: #fff;
+}
+.app-header__close {
+	float: right;
+	cursor: pointer;
+}
+
+/* Navigation */
+
+.app-nav {
+	grid-column: 1 / span 1;
+
+	overflow-y: auto;
+
+	background-color: #f5f5f5;
+	border-right: 1px solid #eee;
+}
+.app-nav > ul {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+.app-nav > ul > li {
+	cursor: default;
+	color: #337ab7;
+	padding: 8px 15px;
+}
+.app-nav > ul > li.enabled {
+	cursor: pointer;
+}
+.app-nav > ul > li.enabled:hover {
+	color: #428bca;
+	background-color: #eee;
+}
+.app-nav > ul > li.enabled.selected {
+	cursor: default;
+	color: #fff;
+	background-color: #428bca;
+}
+.app-nav > ul > li.disabled {
+	display: none;
+}
+/*
+.app-nav > ul > li.enabled:after {
+	content: "▷";
+	float: right;
+	opacity: 50%;
+}
+.app-nav > ul > li.enabled.selected:after {
+	content: "▶";
+}
+*/
+
+.app-main > article {
+	grid-column: 2 / span 1;
+	overflow-y: scroll;
+	overflow-x: auto;
+	padding: 0 1em;
+}
+.app-main > article > h3 {
+	border-bottom: darkslategray 1px solid;
+}
+.app-main > article:after {
+	height: 2em;
+	content: '';
+	display: block;
+}
+</style>
+<style>
+.image--num {
+	font-family: 'Fira Code', 'Iosevka', 'Consolas', 'Courier New', monospace;
+	text-align: right;
+	white-space: pre;
+}
+.image--text {
+	font-family: 'Fira Code', 'Iosevka', 'Consolas', 'Courier New', monospace;
+	text-align: left;
+	white-space: pre;
+}
+th.image--num {
+	font-family: inherit;
+}
+th.image--text {
+	font-family: inherit;
+}
+td.image--num {
+	vertical-align: top;
+	padding: 0.1em 0.5em;
+}
+td.image--text {
+	vertical-align: top;
+	padding: 0.1em 0.5em;
+}
+
+.property-grid {
+	display: grid;
+	grid-template-columns: 12em 10em auto;
+	align-items: start;
+	align-content: start;
+}
+.property-grid > label {
+	grid-column: 1;
+	padding-right: 1em;
+	margin: 0.2em 0;
+}
+.property-grid > span {
+	padding: 0 1em;
+	margin: 0.2em 0;
+}
+.property-grid > h3 {
+	grid-column: span 3;
+}
+.property-grid > table {
+	grid-column: span 3;
+	justify-self: start;
+}
+.property-grid > p,
+.property-grid > div {
+	grid-column: span 3;
+}
+
+table.records {
+	border-spacing: 1em 0.25em;
+}
+
+.number {
+	text-align: right;
+}
+.text {
+	text-align: left;
+}
+.monospace {
+	font-family: 'Fira Code', 'Iosevka', 'Consolas', 'Courier New', monospace;
+	white-space: pre;
+}
+.noselect {
+	user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	-webkit-user-select: none;
+}
+</style>
+<style>
+table.hex-ed {
+	border-spacing: 5px;
+}
+table.hex-ed td {
+	font-weight: lighter;
+}
+table.hex-ed th {
+	font-weight: normal;
+	color: blue;
+	cursor: default;
+}
+</style>
+<style>
+.app-imports > h3 {
+	position: relative;
+}
+.app-imports > h3.collapsed {
+	border-bottom: none;
+}
+.app-imports > h3 > p {
+	position: absolute;
+	top: 0;
+	right: 0;
+	margin: 0;
+	font-weight: normal;
+	font-size: 12pt;
+	cursor: pointer;
+}
+</style>
+<style>
+.app-output {
+	display: flex;
+	flex-direction: column;
+}
+.app-output > textarea {
+	resize: none;
+	width: 100%;
+	flex-grow: 1;
+}
+</style>
+<style>
+article.app-resources {
+	margin-bottom: 2em;
+}
+.app-resources__file-list {
+	display: flex;
+	flex-direction: column;
+}
+.app-resources__file {
+	cursor: pointer !important;
+	border: transparent solid 1px;
+	display: grid;
+	grid-template-columns: 20em 5em 12em;
+}
+.app-resources__file--selected {
+	border: #99d1ff solid 1px;
+	background-color: #cce8ff;
+}
+.app-resources__file > p {
+	margin: 0.1em 0.2em;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+article.app-resources > div.details-pane {
+	position: fixed;
+	width: 100%;
+	height: 2em;
+	padding: 0.2em 1em;
+	box-sizing: border-box;
+	bottom: 0;
+
+	background-color: #cce8ff;
+	border-top: #99d1ff solid 1px;
+
+
+	display: grid;
+	grid-template-columns: minmax(20em, max-content) 5em 12em auto;
+}
+article.app-resources > div.details-pane > p {
+	margin: 0 0.2em;
+}
+</style>
+<style>
+.app-headers__sections tr > th {
+	width: 9em;
+}
+</style>
+<style>
+.bar-chart__titles {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-around;
+}
+.bar-chart__titles > p {
+	padding: 0;
+	text-align: center;
+}
+.bar-chart__titles--pct {
+	font-size: smaller;
+	color: grey;
+}
+
+.bar-chart__graph {
+	position: relative;
+	height: 2.5em;
+	border: 1px solid #000000;
+	background-color: #000000;
+}
+.bar-chart__graph > span {
+	position: absolute;
+	display: inline-block;
+	height: 2.5em;
+	/* Separating sections with a border */
+	border-left: 1px solid #000000;
+	box-sizing: border-box;
+	/* Coloring the section name */
+	color: rgba(0, 0, 0, 0.25);
+	overflow: hidden;
+	line-height: 2.5em;
+	text-align: center;
+}
+</style>
+</head>
+<body>
+
+<template id="app-main">
+	<div class="app-main">
+		<header class="app-header noselect">
+			<h1 class="app-header__caption">
+				PeKit
+				<div v-if="tabCurrent" @click="closeAll()" class="app-header__close">✖</div>
+			</h1>
+		</header>
+		<nav v-if="tabCurrent" class="app-nav noselect">
+			<ul>
+				<li
+					v-for="[tabName, tabItem] in Object.entries(tabs)"
+					:class="{
+						'selected': tabCurrent == tabItem,
+						'enabled': tabEnabled(tabItem),
+						'disabled': !tabEnabled(tabItem),
+					}"
+					@click.prevent="tabOpen(tabName)"
+				>{{ tabItem.title }}</li>
+			</ul>
+		</nav>
+		<keep-alive>
+			<app-upload v-if="!tabCurrent" :state="result.discriminant" :message="result.message" @upload="parse($event)"></app-upload>
+			<component v-if="tabCurrent" :is="tabCurrent.component" :pe="result.pe"></component>
+		</keep-alive>
+	</div>
+</template>
+<template id="app-debug">
+	<article class="app-debug property-grid">
+		<template v-for="dir in pe.debug">
+			<h3>{{ dir.type_string }}</h3>
+				<!-- TimeDateStamp -->
+				<label class="image--text">TimeDateStamp</label>
+				<span class="image--text">{{ dir.time_date_stamp }}</span><span>{{ new Date(dir.time_date_stamp * 1000).toString() }}</span>
+				<!-- Version -->
+				<label class="image--text">Version</label>
+				<span class="image--text">{{ dir.version }}</span>
+			<template v-if="dir.type == 2">
+				<!-- Format -->
+				<label class="image--text">Format</label>
+				<span class="image--text">{{ dir.entry.format }}</span>
+				<!-- PdbFileName -->
+				<label class="image--text">PdbFileName</label>
+				<span class="image--text" style="width: 10em">{{ dir.entry.pdb_file_name }}</span>
+				<!-- Signature -->
+				<template v-if="dir.entry.signature">
+					<label class="image--text">Signature</label>
+					<span class="image--text" style="width: 10em">{{ dir.entry.signature }}</span>
+				</template>
+				<!-- TimeDateStamp -->
+				<template v-if="dir.entry.time_date_stamp">
+					<label class="image--text">TimeDateStamp</label>
+					<span class="image--text">{{ dir.entry.time_date_stamp }}</span><span>{{ new Date(dir.entry.time_date_stamp * 1000).toString() }}</span>
+				</template>
+				<!-- Age -->
+				<label class="image--text">Age</label>
+				<span class="image--text">{{ dir.entry.age }}</span>
+			</template>
+			<template v-else-if="dir.type == 13">
+				<table class="records">
+					<tr>
+						<th class="image--text">Name</th>
+						<th class="image--num">Rva</th>
+						<th class="image--num">Size</th>
+					</tr>
+					<tr v-for="sect in dir.entry">
+						<td class="image--text">{{ sect.name }}</td>
+						<td class="image--num">{{ hex(sect.rva) }}</td>
+						<td class="image--num">{{ hex(sect.size) }}</td>
+					</tr>
+				</table>
+			</template>
+			<template v-else>
+				<p>No further information available.</p>
+				<hex-ed v-if="dir.entry instanceof Array" :data="new Uint8Array(dir.entry)" style="width: 10em"></hex-ed>
+			</template>
+		</template>
+	</article>
+</template>
+<template id="app-dos">
+	<article class="app-dos property-grid">
+		<h3>DOS Header</h3>
+		<template v-for="e in dos_header">
+			<label class="monospace">{{ e.field }}</label>
+			<span class="monospace number">{{ e.value }}</span>
+			<span class="monospace">{{ e.details }}</span>
+		</template>
+		<h3>DOS Image</h3>
+		<hex-ed :data="dos_image"></hex-ed>
+	</article>
+</template>
+<template id="app-exports">
+	<article class="app-exports property-grid">
+		<h3>Properties</h3>
+		<label class="monospace">DllName</label>
+		<span class="monospace" style="max-width: 10em">{{ pe.exports.dll_name }}</span>
+		<label class="monospace">TimeDateStamp</label>
+		<span class="monospace">{{ pe.exports.time_date_stamp }}</span>
+		<span>{{ new Date(pe.exports.time_date_stamp * 1000).toString() }}</span>
+		<label class="monospace">Version</label>
+		<span class="monospace">{{ pe.exports.version }}</span>
+		<label class="monospace">NumberOfFunctions</label>
+		<span class="monospace">{{ pe.exports.functions.length }}</span>
+		<label class="monospace">NumberOfNames</label>
+		<span class="monospace">{{ names.length }}</span>
+		<h3>Symbols</h3>
+		<table class="records">
+			<tr>
+				<th style="text-align: right">Ord</th>
+				<th style="text-align: right">Address</th>
+				<th style="text-align: left">Name</th>
+			</tr>
+			<tr v-for="sym in symbols">
+				<td class="monospace number">{{ sym.ordinal }}</td>
+				<td class="monospace number">{{ sym.address }}</td>
+				<td class="monospace"><span v-for="name in (sym.names || [])">{{ name }}</span></td>
+			</tr>
+		</table>
+	</article>
+</template>
+<template id="app-headers">
+	<article class="app-headers property-grid">
+		<template v-for="table in tables">
+			<h3>{{ table.title }}</h3>
+			<template v-for="e in table.data">
+				<label class="monospace">{{ e.field }}</label>
+				<span class="monospace number">{{ e.value }}</span>
+				<span class="monospace">{{ e.details }}</span>
+			</template>
+		</template>
+		<h3>Data Directory</h3>
+		<table class="records">
+			<tr>
+				<th class="text">Name</th>
+				<th class="text">Section</th>
+				<th class="number">VirtualAddress</th>
+				<th class="number">Size</th>
+			</tr>
+			<tr v-for="dd in dataDirectory">
+				<td class="monospace text">{{ dd.name }}</td>
+				<td class="monospace text">{{ dd.section }}</td>
+				<td class="monospace number">{{ dd.address }}</td>
+				<td class="monospace number">{{ dd.size }}</td>
+			</tr>
+		</table>
+	</article>
+</template>
+<template id="hex-ed">
+	<table class="monospace hex-ed">
+		<tr>
+			<td></td>
+			<th v-for="col in 16" class="noselect">{{ (col - 1).toString(16).padStart(2, '0') }}</th>
+			<td></td>
+		</tr>
+		<tr v-for="row in data_rows">
+			<th class="noselect">{{ row.offset.toString(16).padStart(8, '0') }}</th>
+			<td v-for="byte in row.bytes">{{ byte.toString(16).padStart(2, '0') }}</td>
+			<td v-for="_ in 16 - row.bytes.length"></td>
+			<td>{{ row.ascii }}</td>
+		</tr>
+	</table>
+</template>
+<template id="app-imports">
+	<article class="app-imports">
+		<p><button @click="expandAll()">Expand All</button> <button @click="collapseAll()">Collapse All</button></p>
+		<template v-for="desc in pe.imports">
+			<h3 :class="{ collapsed: !state[desc.dll_name] }">
+				{{ desc.dll_name }}
+				<p @click="toggle(desc.dll_name)">
+					{{ desc.int.length }} imports {{ state[desc.dll_name] ? '▼' : '▷' }}
+				</p>
+			</h3>
+			<table v-if="state[desc.dll_name]" class="records">
+				<tr>
+					<th class="image--num" style="width: 5em">Hint</th>
+					<th class="image--text" style="width: 5em">Name</th>
+				</tr>
+				<tr v-for="imp in desc.int">
+					<template v-if="imp.ByName">
+						<td class="image--num">{{ imp.ByName.hint }}</td>
+						<td class="image--text">{{ imp.ByName.name }}</td>
+					</template>
+					<template v-if="imp.ByOrdinal">
+						<td class="image--num">ord</td>
+						<td class="image--text">{{ imp.ByOrdinal.ord }}</td>
+					</template>
+				</tr>
+			</table>
+		</template>
+	</article>
+</template>
+<template id="app-output">
+	<article class="app-output">
+		<p><input type="checkbox" v-model="pretty"><label>Prettify.</label></p>
+		<textarea readonly>{{ text }}</textarea>
+	</article>
+</template>
+<template id="app-overview">
+	<article class="app-overview property-grid">
+		<h3>Version Information</h3>
+		<table v-if="pe.resources && pe.resources.version_info" class="records">
+			<tr v-for="[key, value] in Object.entries(pe.resources.version_info.strings)">
+				<td>{{ key }}</td>
+				<td>{{ value }}</td>
+			</tr>
+		</table>
+		<p v-else>No version information was found.</p>
+	</article>
+</template>
+<template id="app-resources">
+	<article class="app-resources property-grid">
+		<template v-for="[groupName, files] in Object.entries(files)">
+			<h3>{{ groupName }}</h3>
+			<div class="app-resources__file-list">
+				<div
+					v-for="file in files"
+					@click="togglePreview(file)"
+					class="app-resources__file"
+					:class="{ 'app-resources__file--selected': fileDetails == file }"
+				>
+					<p>{{ file.path.slice(1).join("-") }}</p>
+					<p class="number">{{ file.size }} B</p>
+					<p>{{ file.download.mime }}</p>
+				</div>
+			</div>
+		</template>
+		<div class="preview-modal">
+			
+		</div>
+		<div class="details-pane">
+			<template v-if="fileDetails != null">
+				<p>{{ "/" + fileDetails.path.join("/") }}</p>
+				<p class="number">{{ fileDetails.size }} B</p>
+				<p>{{ fileDetails.download.mime }}</p>
+				<p>
+					<button @click="download(fileDetails)">Download</button>
+					<button>Preview</button>
+				</p>
+			</template>
+		</div>
+	</article>
+</template>
+<template id="app-rich">
+	<article class="app-rich property-grid">
+		<h3>Properties</h3>
+		<label class="monospace">XOR Key</label>
+		<span class="monospace">{{ hex(pe.rich_structure.xor_key) }}</span>
+		<label class="monospace">Checksum</label>
+		<span class="monospace">{{ hex(pe.rich_structure.checksum) }}</span>
+		<label class="monospace">IsValid</label>
+		<template v-if="is_valid">
+			<span style="color: limegreen">✔</span>
+			<span>The Checksum matches the XOR Key.</span>
+		</template>
+		<template v-if="!is_valid">
+			<span style="color: red">✖</span>
+			<span>The Checksum does not match the XOR Key!</span>
+		</template>
+		<h3>Records</h3>
+		<table class="records">
+			<tr>
+				<th class="monospace number">Product</th>
+				<th class="monospace number">Build</th>
+				<th class="monospace number">Count</th>
+			</tr>
+			<tr v-for="record in pe.rich_structure.records">
+				<td class="monospace number">{{ record.product }}</td>
+				<td class="monospace number">{{ record.build }}</td>
+				<td class="monospace number">{{ record.count }}</td>
+			</tr>
+		</table>
+	</article>
+</template>
+<template id="app-sections">
+	<article class="app-sections">
+		<h3>Section Headers</h3>
+		<table class="app-headers__sections">
+			<tr>
+				<th class="image--text">Name</th>
+				<th class="image--num">VirtualAddress</th>
+				<th class="image--num">VirtualSize</th>
+				<th class="image--num">PointerToRawData</th>
+				<th class="image--num">SizeOfRawData</th>
+				<th class="image--num">Characteristics</th>
+				<th class="image--text"></th>
+			</tr>
+			<tr v-for="s in sections">
+				<td class="image--text">{{ s.name }}</td>
+				<td class="image--num">{{ s.vaddress }}</td>
+				<td class="image--num">{{ s.vsize }}</td>
+				<td class="image--num">{{ s.rawdata }}</td>
+				<td class="image--num">{{ s.rawsize }}</td>
+				<td class="image--num">{{ s.chars }}</td>
+				<td class="image--text">{{ s.details }}</td>
+			</tr>
+		</table>
+		<h3>Section Layout</h3>
+		<bar-chart :items="virtual_items" :vsize="virtual_size"></bar-chart>
+		<!-- <h3>RawData sizes</h3>
+		     <bar-chart :items="rawdata_items" :vsize="rawdata_size"></bar-chart> -->
+	</article>
+</template>
+<template id="app-tls">
+	<article class="app-tls property-grid">
+		<h3>Raw Data</h3>
+		<hex-ed :data="new Uint8Array(pe.tls.raw_data)"></hex-ed>
+		<h3>Callbacks</h3>
+		<p v-if="pe.tls.callbacks.length <= 0">There are no TLS callbacks.</p>
+		<table v-else>
+			<tr><th>Address</th></tr>
+			<tr v-for="address in pe.tls.callbacks">
+				<td class="image--hex">{{ address.toString(16) }}</td>
+			</tr>
+		</table>
+	</article>
+</template>
+<template id="app-upload">
+	<article class="app-upload" @drop="dropped($event)">
+		<p>PeKit is a web application to inspect <a href="https://en.wikipedia.org/wiki/Portable_Executable">Portable Executable (PE)</a> files. This project is Open Source and available on <a href="https://github.com/CasualX/pekit">GitHub</a>.</p>
+		<p>To get started, please submit an executable file:</p>
+		<input type="file" accept=".exe,.dll,.sys,.mui" @change="submit($event.target.files)">
+		<p v-if="state == states.loading"></p>
+		<p v-else-if="state == states.success">Success.</p>
+		<p v-else-if="state == states.error">Error: {{ message }}.</p>
+		<p v-else>{{ typeof state }}</p>
+		<p>Or choose one of the demo samples:
+			<input type="button" @click="sample('Demo.dll')" value="32-bit">
+			<input type="button" @click="sample('Demo64.dll')" value="64-bit">.
+		</p>
+	</article>
+</template>
+<template id="bar-chart">
+	<section class="bar-chart">
+		<div class="bar-chart__titles">
+			<p v-for="item in items">
+				<span class="image--text">{{ item.name }}</span>
+				<span class="bar-chart__titles--pct">{{ ((item.end - item.start) / vsize * 100).toFixed(1) }}%</span>
+			</p>
+		</div>
+		<div class="bar-chart__graph image--text noselect">
+			<span
+				v-for="item in items"
+				:style="{
+					'left': (item.start / vsize * 100).toFixed(1) + '%',
+					'width': ((item.end - item.start) / vsize * 100).toFixed(1) + '%',
+					'background-color': item.color,
+				}"
+				:title="item.name"
+			>{{ item.name }}</span>
+		</div>
+	</section>
+</template>
+<div id="app">
+	<app-main></app-main>
+</div>
+</body>
+
+<script>
+"use strict"
+
+Vue.component('app-main', {
+	data: function() {
+		let tabs = Object.freeze({
+			overview: {
+				component: 'app-overview',
+				title: "Overview",
+				prop: null,
+			},
+			output: {
+				component: 'app-output',
+				title: "Output",
+				prop: null,
+			},
+			dos: {
+				component: 'app-dos',
+				title: "DOS",
+				prop: 'headers',
+			},
+			headers: {
+				component: 'app-headers',
+				title: "Headers",
+				prop: 'headers',
+			},
+			sections: {
+				component: 'app-sections',
+				title: "Sections",
+				prop: 'headers',
+			},
+			rich: {
+				component: 'app-rich',
+				title: "Rich Structure",
+				prop: 'rich_structure',
+			},
+			exports: {
+				component: 'app-exports',
+				title: "Exports",
+				prop: 'exports',
+			},
+			imports: {
+				component: 'app-imports',
+				title: "Imports",
+				prop: 'imports',
+			},
+			debug: {
+				component: 'app-debug',
+				title: "Debug",
+				prop: 'debug',
+			},
+			tls: {
+				component: 'app-tls',
+				title: "TLS",
+				prop: 'tls',
+			},
+			resources: {
+				component: 'app-resources',
+				title: "Resources",
+				prop: 'resources',
+			},
+		});
+		return {
+			tabs,
+			tabCurrent: null,
+			result: { discriminant: PeKit.states.loading },
+			states: PeKit.states,
+		};
+	},
+	methods: {
+		tabEnabled: function(tabItem) {
+			// If we didn't parse successfully, disable everything
+			if (this.result.discriminant != PeKit.states.success)
+				return false;
+			// Always visible components
+			if (!tabItem.prop)
+				return true;
+			// Enabled if we have the property
+			return this.result.pe[tabItem.prop] != null;
+		},
+		tabOpen: function(tabName) {
+			let tabItem = this.tabs[tabName];
+			// If we aren't enabled, forget about it
+			if (!this.tabEnabled(tabItem)) {
+				return;
+			}
+			this.tabCurrent = tabItem;
+		},
+		closeAll: function() {
+			this.tabCurrent = null;
+		},
+		parse: function(arrayBuffer) {
+			let bytes = new Uint8Array(arrayBuffer);
+			this.result = Object.freeze(pekit.parse(bytes));
+			// Export the coded result to the outside world
+			window.result = this.result;
+			// Open the overview
+			if (this.result.discriminant == PeKit.states.success) {
+				this.tabOpen(Object.keys(this.tabs)[0]);
+			}
+		},
+	},
+	template: '#app-main',
+});
+</script>
+<script>
+"use strict"
+
+class PeKit {
+	constructor() {
+		this.result = null;
+		this.initialize();
+	}
+	async initialize() {
+		let response = await fetch("pekit.wasm");
+		let arrayBuffer = await response.arrayBuffer();
+		let resultObject = await WebAssembly.instantiate(arrayBuffer, {});
+		this.result = resultObject;
+	}
+
+	/// Parses a PE32 or PE32+ image file and returns information in JSON format.
+	///
+	/// # Parameters
+	///
+	/// * bytes: `Uint8Array`, the image bytes to parse.
+	parse(bytes) {
+		if (!this.result) {
+			return { discriminant: PeKit.states.loading };
+		}
+
+		let instance = this.result.instance;
+
+		// Allocate and copy the input bytes
+		let ptr = instance.exports.allocate_bytes(bytes.length);
+		new Uint8Array(instance.exports.memory.buffer, ptr, bytes.length).set(bytes);
+
+		// Allocate the return string
+		let result = instance.exports.string_allocate();
+
+		// Invoke pelite json to_string
+		let success = instance.exports.to_string(ptr, bytes.length, result);
+
+		// Extract the resulting string
+		let str_data = instance.exports.string_data(result);
+		let str_len = instance.exports.string_len(result);
+		let str_bytes = new Uint8Array(instance.exports.memory.buffer, str_data, str_len);
+		let str = new TextDecoder('utf-8').decode(str_bytes);
+
+		// Cleanup resources
+		instance.exports.free_bytes(ptr, bytes.length);
+		instance.exports.string_free(result);
+
+		return success ?
+			{ discriminant: PeKit.states.success, pe: JSON.parse(str) } :
+			{ discriminant: PeKit.states.error, message: str };
+	}
+}
+PeKit.states = Object.freeze({
+	success: Symbol('success'),
+	error: Symbol('error'),
+	loading: Symbol('loading')
+});
+</script>
+<script>
+"use strict"
+
+function hex(value, bits) {
+	if (bits === undefined) {
+		return value == 0 ? "0" : "0x" + value.toString(16);
+	}
+	else {
+		return value.toString(16).padStart(bits / 4, "·");
+	}
+}
+function base64decode(base64) {
+	const binary_string = atob(base64);
+	const len = binary_string.length;
+	let bytes = new Uint8Array( len );
+	for (let i = 0; i < len; i++) {
+		bytes[i] = binary_string.charCodeAt(i);
+	}
+	return bytes;
+}
+function detectMimeFromData(data) {
+	// Test if data matches the signature
+	function test(offset, signature) {
+		if (data.length < offset + signature.length)
+			return false;
+		let slice = data.slice(offset, offset + signature.length);
+		for (let i = 0; i < signature.length; ++i) {
+			if (signature[i] != slice[i])
+				return false;
+		}
+		return true;
+	}
+	if (test(0, [0xFF, 0xD8, 0xFF]))
+		return { name: "JPEG", preview: 'img', ext: "jpg", mime: "image/jpeg" };
+	if (test(0, [0x47, 0x49, 0x46, 0x38, 0x39, 0x61]) || test(0, [0x47, 0x49, 0x46, 0x38, 0x37, 0x61]))
+		return { name: "GIF", preview: 'img', ext: "gif", mime: "image/gif" };
+	if (test(0, [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]))
+		return { name: "PNG", preview: 'img', ext: "png", mime: "image/png" };
+	if (test(0, [0x00, 0x00, 0x01, 0x00]))
+		return { name: "ICO", preview: 'img', ext: "ico", mime: "image/x-icon" };
+	if (test(0, [0x00, 0x00, 0x02, 0x00]))
+		return { name: "CUR", preview: 'img', ext: "cur", mime: "image/x-icon" };
+	if (test(0, [0x42, 0x4D]))
+		return { name: "BMP", preview: 'img', ext: "bmp", mime: "image/bmp" };
+	if (test(0, [0x3C, 0x3F, 0x78, 0x6D, 0x6C]))
+		return { name: "XML", preview: 'text', ext: "xml", mime: "text/xml" };
+	return null;
+}
+</script>
+<script>
+Vue.component('app-debug', {
+	data: function() {
+		return {};
+	},
+	methods: {
+		hex,
+		Uint8Array,
+	},
+	props: {
+		pe: Object,
+	},
+	template: '#app-debug',
+});
+</script>
+<script>
+Vue.component('app-dos', {
+	data: function() {
+		return {};
+	},
+	computed: {
+		dos_header: function() {
+			// Massage the dos header for rendering
+			let list = [];
+			for (let [field, value] of Object.entries(this.pe.headers.DosHeader)) {
+				let details = this.pe.headers.details['DosHeader.' + field] || "";
+				if (typeof value == 'number') {
+					list.push({ field, value: hex(value), details });
+				}
+				else if (value.length >= 0) {
+					for (let i = 0; i < value.length; ++i) {
+						list.push({ field: `${field}[${i}]`, value: hex(value[i]), details: "" });
+					}
+				}
+			}
+			return list;
+		},
+		dos_image: function() {
+			return base64decode(this.pe.headers.DosImage);
+		},
+	},
+	props: {
+		pe: Object,
+	},
+	template: '#app-dos',
+});
+</script>
+<script>
+"use strict"
+
+Vue.component('app-exports', {
+	computed: {
+		names: function() {
+			return Object.entries(this.pe.exports.names);
+		},
+		symbols: function() {
+			let names = new Array(this.pe.exports.functions.length);
+			this.names.forEach(([name, index]) => {
+				names[index] = names[index] || [];
+				names[index].push(name);
+			});
+			let symbols = this.pe.exports.functions.map((address, index) => ({
+				empty: address == 0 && !names[index],
+				address: hex(address),
+				ordinal: this.pe.exports.ordinal_base + index,
+				names: names[index],
+			})).filter(sym => !sym.empty);
+			return Object.freeze(symbols);
+		},
+	},
+	props: {
+		pe: Object,
+	},
+	template: '#app-exports',
+});
+</script>
+<script>
+"use strict"
+
+Vue.component('app-headers', {
+	data: function() {
+		return {
+			details: false,
+		};
+	},
+	computed: {
+		tables: function() {
+			// Massage the nt headers for rendering
+			let ntHeaders = [{
+				field: "Signature",
+				value: hex(this.pe.headers.NtHeaders.Signature),
+				details: this.pe.headers.details['NtHeaders.Signature'] || "",
+			}];
+
+			// Massage the file header for rendering
+			let fileHeader = [];
+			for (let [field, value] of Object.entries(this.pe.headers.NtHeaders.FileHeader)) {
+				let details = field == "TimeDateStamp"
+					? new Date(value * 1000).toString()
+					: this.pe.headers.details['FileHeader.' + field] || "";
+				if (typeof details != 'string') {
+					details = details.join('\n');
+				}
+				fileHeader.push({ field, value: hex(value), details });
+			}
+
+			// Massage the optional header for rendering
+			let optionalHeader = [];
+			for (let [field, value] of Object.entries(this.pe.headers.NtHeaders.OptionalHeader)) {
+				let details = this.pe.headers.details['OptionalHeader.' + field] || "";
+				if (typeof details == 'object') {
+					details = details.join('\n');
+				}
+				let string = typeof value == 'string' ? value : hex(value);
+				optionalHeader.push({ field, value: string, details });
+			}
+
+			return [
+				{ title: "NT Headers", data: ntHeaders },
+				{ title: "File Header", data: fileHeader },
+				{ title: "Optional Header", data: optionalHeader },
+			];
+		},
+		dataDirectory: function() {
+			let dataDirectory = [];
+			for (let i = 0; i < this.pe.headers.DataDirectory.length; ++i) {
+				let dd = this.pe.headers.DataDirectory[i];
+				if (dd.VirtualAddress > 0) {
+					let section = this.pe.headers.SectionHeaders[this.pe.headers.details['DataDirectory.Sections'][i]];
+					dataDirectory.push({
+						name: this.pe.headers.details['DataDirectory.Names'][i],
+						section: section && section.Name,
+						address: hex(dd.VirtualAddress),
+						size: hex(dd.Size),
+					});
+				}
+			}
+			return dataDirectory;
+		},
+	},
+	props: {
+		pe: Object,
+	},
+	template: '#app-headers',
+});
+</script>
+<script>
+Vue.component('hex-ed', {
+	data: function() {
+		return {};
+	},
+	computed: {
+		data_rows: function() {
+			let length = ((this.data.length - 1) / 16 + 1) | 0;
+			let rows = [];
+			for (let i = 0; i < length; ++i) {
+				let offset = i * 16;
+				let bytes = new Uint8Array(this.data.buffer, offset, Math.min(16, this.data.length - offset));
+				let ascii = Array.from(bytes).map(byte => byte >= 32 && byte < 0x7f ? String.fromCharCode(byte) : '·').join('');
+				rows.push({ offset, bytes, ascii });
+			}
+			return rows;
+		},
+	},
+	props: {
+		data: Uint8Array,
+	},
+	template: '#hex-ed',
+});
+</script>
+<script>
+"use strict"
+
+Vue.component('app-imports', {
+	data: function() {
+		return {
+			state: {},
+		};
+	},
+	methods: {
+		expand: function(dll_name) {
+			Vue.set(this.state, dll_name, true);
+		},
+		expandAll: function() {
+			for (let imp of this.pe.imports) {
+				Vue.set(this.state, imp.dll_name, true);
+			}
+		},
+		collapse: function(dll_name) {
+			Vue.set(this.state, dll_name, false);
+		},
+		collapseAll: function() {
+			this.state = {};
+		},
+		toggle: function(dll_name) {
+			Vue.set(this.state, dll_name, !this.state[dll_name]);
+		},
+	},
+	props: {
+		pe: Object,
+	},
+	template: '#app-imports',
+});
+</script>
+<script>
+"use strict"
+
+Vue.component('app-output', {
+	data: function() {
+		return {
+			pretty: false,
+		};
+	},
+	props: {
+		pe: Object,
+	},
+	computed: {
+		text: function() {
+			return this.pretty ? JSON.stringify(this.pe, null, 2) : JSON.stringify(this.pe);
+		},
+	},
+	template: '#app-output',
+});
+</script>
+<script>
+"use strict"
+
+Vue.component('app-overview', {
+	props: {
+		pe: Object,
+	},
+	template: '#app-overview',
+});
+</script>
+<script>
+Vue.component('app-resources', {
+	data: function() {
+		return {
+			// Details pane shows information about this file
+			fileDetails: null,
+		};
+	},
+	computed: {
+		files: function() {
+			let flattened = this.flattenFiles(this.pe.resources.root);
+			let files = {};
+			for (file of flattened) {
+				let groupName = file.path.length == 3 ? this.rsrcTypeName(file.path[0]) : "Loose Files";
+				files[groupName] = files[groupName] || [];
+				files[groupName].push(file);
+			}
+			return Object.freeze(files);
+		},
+	},
+	props: {
+		pe: Object,
+	},
+	methods: {
+		createDownload: function(path, bytes, type) {
+			let mime = type ? type.mime : "application/octet-stream";
+			let blob = new Blob([bytes], { type: mime });
+			// Turn this mess into a reasonable filename of sorts
+			let filename = Array.from(path.join("-").replace(/[<>:"/\\|?*]/gi, '_')).filter(c => c.charCodeAt(0) >= 32).join('');
+			if (type) {
+				filename += "." + type.ext;
+			}
+			return { blob, filename, mime };
+		},
+		createData: function(path, data) {
+			let bytes = base64decode(data.bytes);
+			let type = detectMimeFromData(bytes);
+			let size = data.size;
+			let download = this.createDownload(path, bytes, type);
+			return { path, size, bytes, download };
+		},
+		flattenFiles: function(dir, path, list) {
+			path = path || [];
+			list = list || [];
+			for (let entry of dir) {
+				let name = typeof entry.name == "string" ? entry.name : "#" + entry.name.toString();
+				let new_path = [...path, name];
+				if (entry.directory) {
+					this.flattenFiles(entry.directory, new_path, list);
+				}
+				else if (entry.data) {
+					list.push(this.createData(new_path, entry.data));
+				}
+			}
+			return list;
+		},
+		togglePreview: function(file) {
+			this.fileDetails = this.fileDetails == file ? null : file;
+		},
+		download: function(file) {
+			saveAs(file.download.blob, file.download.filename);
+		},
+		rsrcTypeName: function(name) {
+			switch (name) {
+				case "#1": return "Cursors";
+				case "#2": return "Bitmaps";
+				case "#3": return "Icons";
+				case "#4": return "Menus";
+				case "#5": return "Dialogs";
+				case "#6": return "Strings";
+				case "#7": return "Font Directory";
+				case "#8": return "Fonts";
+				case "#9": return "Accelerators";
+				case "#10": return "RC Data";
+				case "#11": return "Message Tables";
+				case "#12": return "Group Cursors";
+				case "#14": return "Group Icons";
+				case "#16": return "Version";
+				case "#17": return "DlgInclude";
+				case "#19": return "Plug and Play";
+				case "#20": return "VXD";
+				case "#21": return "Animated Cursors";
+				case "#22": return "Animated Icons";
+				case "#23": return "HTML";
+				case "#24": return "Manifest";
+				default: return name;
+			}
+		},
+	},
+	template: '#app-resources',
+});
+</script>
+<script>
+Vue.component('app-rich', {
+	data: function() {
+		return {};
+	},
+	computed: {
+		is_valid: function() {
+			return this.pe.rich_structure.xor_key == this.pe.rich_structure.checksum;
+		},
+	},
+	methods: {
+		hex: function(value) {
+			return value == 0 ? "0" : "0x" + value.toString(16);
+		},
+	},
+	props: {
+		pe: Object,
+	},
+	template: '#app-rich',
+});
+</script>
+<script>
+Vue.component('app-sections', {
+	data: function() {
+		return {};
+	},
+	methods: {
+		chars_color: function(chars) {
+			if (chars & 0x20000000) {
+				if (chars & 0x80000000) {
+					return 'hsl(0, 50%, 50%)';
+				}
+				else {
+					return 'hsl(60, 50%, 50%)';
+				}
+			}
+			if (chars & 0x80000000) {
+				return 'hsl(210, 50%, 50%)';
+			}
+			else {
+				return 'hsl(120, 50%, 50%)';
+			}
+		}
+	},
+	computed: {
+		sections: function() {
+			return this.pe.headers.SectionHeaders.map((section, i) => ({
+				name: section.Name,
+				vaddress: hex(section.VirtualAddress),
+				vsize: hex(section.VirtualSize),
+				rawdata: hex(section.PointerToRawData),
+				rawsize: hex(section.SizeOfRawData),
+				chars: hex(section.Characteristics),
+				details: this.pe.headers.details['SectionHeaders.Characteristics'][i].join('\n'),
+			}));
+		},
+		virtual_items: function() {
+			return this.pe.headers.SectionHeaders
+				.filter(section => section.VirtualAddress != 0 && section.VirtualSize != 0)
+				.map(section => ({
+					name: section.Name,
+					start: section.VirtualAddress,
+					end: section.VirtualAddress + section.VirtualSize,
+					color: this.chars_color(section.Characteristics),
+				}));
+		},
+		virtual_size: function() {
+			return this.pe.headers.NtHeaders.OptionalHeader.SizeOfImage;
+		},
+/*
+		rawdata_items: function() {
+			return this.pe.headers.SectionHeaders
+				.filter(section => section.PointerToRawData != 0 && section.SizeOfRawData != 0)
+				.map(section => ({
+					name: section.Name,
+					start: section.PointerToRawData,
+					end: section.PointerToRawData + section.SizeOfRawData,
+					color: this.chars_color(section.Characteristics),
+				}));
+		},
+		rawdata_size: function() {
+			return Math.max.apply(null, this.pe.headers.SectionHeaders.map(section => section.PointerToRawData + section.SizeOfRawData));
+		},
+*/
+	},
+	props: {
+		pe: Object,
+	},
+	template: '#app-sections',
+});
+</script>
+<script>
+"use strict"
+
+Vue.component('app-tls', {
+	props: {
+		pe: Object,
+	},
+	methods: {
+		Uint8Array,
+	},
+	template: '#app-tls',
+});
+</script>
+<script>
+"use strict"
+
+Vue.component('app-upload', {
+	data: function() {
+		return {
+			states: PeKit.states,
+		};
+	},
+	props: {
+		state: Symbol,
+		message: String,
+	},
+	methods: {
+		submit: function(files) {
+			if (files.length != 1) {
+				this.state = this.states.loading;
+				return;
+			}
+			let reader = new FileReader();
+			reader.onload = e => this.$emit('upload', e.target.result);
+			reader.readAsArrayBuffer(files[0]);
+		},
+		sample: function(name) {
+			fetch('samples/' + name)
+				.then(response => response.arrayBuffer())
+				.then(arrayBuffer => this.$emit('upload', arrayBuffer));
+		},
+		dropped: function(e) {
+			console.log(e);
+		},
+	},
+	template: '#app-upload',
+});
+</script>
+<script>
+"use strict"
+
+Vue.component('bar-chart', {
+	data: function() {
+		return {};
+	},
+	props: {
+		items: Array,
+		vsize: Number,
+	},
+	template: '#bar-chart',
+});
+</script>
+<script>
+var pekit = new PeKit();
+var app = new Vue({
+	el: '#app',
+});
+</script>
+</html>
+
